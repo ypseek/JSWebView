@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,shrink-to-fit=no">
+            <title>测试JsWebView框架</title>
+            
+            <script type="text/javascript">
+                
+                /*
+                WebView传过来的数据结构:
+                {
+                  "action": "action_name",
+                  "id": "random_value"
+                  "result": true
+                  "data": {...}  // optional
+                }
+                action：与传给WebView的一致。如果各种操作都用同一个回调函数，则可以此区分是哪个操作。
+                id：与传给WebView的一致。
+                result：操作结果。如果是true，则成功，如果是false，则为错误信息
+                data：操作结果对应的数据，某些操作才有。即使只有一项数据，也应放到字典里由key来标识
+                */
+            
+            function callNative(object) {
+                if (window.JSModule) {
+                    // Android
+                    window.JSModule.postMessage(JSON.stringify(object))
+                } else if (window.webkit && window.webkit.messageHandlers.JSModule) {
+                    // iOS WKWebView
+                    window.webkit.messageHandlers.JSModule.postMessage(object)
+                } else {
+                    alert("此功能需要在WebView中使用！")
+                }
+            }
+            
+            function doGetPackageName() {
+                var info = {
+                    "action": "getPackageName",
+                    "id": Math.random().toString(),
+                    "callback": "getPackageNameCallback"
+                }
+                callNative(info)
+            }
+            
+            function getPackageNameCallback(object) {
+                if (object.result === true) {
+                    document.getElementById('package_result').innerHTML = object.data.name;
+                } else {
+                    document.getElementById('package_result').innerHTML = object.result;
+                }
+            }
+            
+            function doGetUnsupported() {
+                var info = {
+                    "action": "whatever",
+                    "id": Math.random().toString(),
+                    "callback": "getUnsupportedCallback"
+                }
+                callNative(info)
+            }
+            
+            function getUnsupportedCallback(object) {
+                document.getElementById('unsupported_result').innerHTML = object.result;
+            }
+            </script>
+            </head>
+    
+    <body>
+        <input type="button" onclick="doGetPackageName()" value="获取程序包名" />
+        <br>
+        <p id="package_result">请点击获取获取程序包名，这里将显示结果</p>
+        
+        <input type="button" onclick="doGetUnsupported()" value="调用不支持的action" />
+        <br>
+        <p id="unsupported_result">请点击调用不支持的action，这里将显示结果</p>
+    </body>
+    
+</html>
