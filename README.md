@@ -1,5 +1,54 @@
 # JavaScript与WKWebView交互框架设计
 
+## 使用
+
+- 创建 `webview`，添加 `WebViewInjector`实例
+```
+class ViewController: UIViewController {
+
+    var webView: WKWebView!
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        let injector = WebViewInjector()
+        let config = WKWebViewConfiguration()
+        let controller = WKUserContentController()
+        controller.add(injector, name: "JSModule")
+        config.userContentController = controller
+        
+        webView = WKWebView.init(frame: view.frame, configuration: config)
+        view.addSubview(webView)
+        injector.inject(to: webView)
+        
+        let path = Bundle.main.path(forResource: "test-framework", ofType: "html")
+        let url = URL.init(fileURLWithPath: path ?? "")
+        let request = URLRequest.init(url: url)
+        webView.load(request)
+    }
+}
+
+```
+
+- 服从 `JSHandler` 协议，实现其方法
+```
+class GetPackageNameHandler: JSHandler {
+    
+    func action() -> String {
+        return "getPackageName"
+    }
+    
+    func handleJS(from webView: WKWebView, info: [String : Any]) {
+        let name = Bundle.main.bundleIdentifier
+        var toJS = [String : Any].init(minimumCapacity: 4)
+        toJS["result"] = true
+        toJS["data"] = ["name" : name]
+        invokeCallback(webView: webView, fromJS: info, toJS: toJS)
+    }
+}
+```
+
+
 ## 总体设计
 
 约定所有交互都是由js发起，如果需要native不断向js传递数据，由js先通知native“可以开始传了”。
@@ -41,22 +90,3 @@ WebView传过来的也是个json对象:
 js调用native `window.webkit.messageHandlers.JSModule.postMessage(object)`
 
 native调用js `webView.evaluateJavaScript(jsStr, completionHandler: nil)`
-
-## 使用
-
-服从JSHandler协议，实现其方法
-```class GetPackageNameHandler: JSHandler {
-    
-    func action() -> String {
-        return "getPackageName"
-    }
-    
-    func handleJS(from webView: WKWebView, info: [String : Any]) {
-        let name = Bundle.main.bundleIdentifier
-        var toJS = [String : Any].init(minimumCapacity: 4)
-        toJS["result"] = true
-        toJS["data"] = ["name" : name]
-        invokeCallback(webView: webView, fromJS: info, toJS: toJS)
-    }
-}
-```
