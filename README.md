@@ -2,7 +2,7 @@
 
 ## 使用
 
-- 创建 `webview`，添加 `WebViewInjector`实例
+1. 创建 `webview`，添加 `WebViewInjector`实例
 ```
 class ViewController: UIViewController {
 
@@ -30,7 +30,7 @@ class ViewController: UIViewController {
 
 ```
 
-- 服从 `JSHandler` 协议，实现其方法
+2. 服从 `JSHandler` 协议，实现其方法
 ```
 class GetPackageNameHandler: JSHandler {
     
